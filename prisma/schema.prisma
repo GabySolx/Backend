@@ -12,3 +12,24 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// BC Account
+
+model users {
+  id            Int   @id   @default(autoincrement())
+  first_name    String      @db.VarChar(50)    
+  last_name     String      @db.VarChar(50)
+  photo         String?     @db.VarChar(500)
+  email         String      @db.VarChar(50)
+  password      String      @db.VarChar(20)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  type_user_id  Int
+  type_user     type_user   @relation(fields: [type_user_id], references: [id])
+}
+
+model type_user {
+  id          Int   @id   @default(autoincrement())
+  type        String      @db.VarChar(25)
+  users       users[]
+}
