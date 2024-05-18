@@ -26,10 +26,32 @@ model users {
   updated_at    DateTime?
   type_user_id  Int
   type_user     type_user   @relation(fields: [type_user_id], references: [id])
+  chatbot_conversations   chatbot_conversations[]
 }
 
 model type_user {
   id          Int   @id   @default(autoincrement())
   type        String      @db.VarChar(25)
   users       users[]
+}
+
+// BC Chatbot
+
+model chatbot_conversations{
+  id            Int     @id   @default(autoincrement())
+  start_date    DateTime
+  end_date      DateTime
+  users_id      Int
+  chatbot_messages  chatbot_messages[]
+  users         users         @relation(fields: [users_id], references: [id])
+}
+
+model chatbot_messages {
+  id              Int   @id   @default(autoincrement())
+  content         String      @db.Text  
+  is_user_message Boolean     @default(false) @db.TinyInt
+  created_at      DateTime    @default(now())
+  updated_at      DateTime?
+  chatbot_conversations_id   Int
+  chatbot_conversations chatbot_conversations   @relation(fields: [chatbot_conversations_id], references: [id])    
 }
