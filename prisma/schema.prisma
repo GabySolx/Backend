@@ -27,6 +27,7 @@ model users {
   type_user_id  Int
   type_user     type_user   @relation(fields: [type_user_id], references: [id])
   chatbot_conversations   chatbot_conversations[]
+  notifications notifications[]
 }
 
 model type_user {
@@ -54,4 +55,24 @@ model chatbot_messages {
   updated_at      DateTime?
   chatbot_conversations_id   Int
   chatbot_conversations chatbot_conversations   @relation(fields: [chatbot_conversations_id], references: [id])    
+}
+
+// BC Notification
+
+model notifications {
+  id          Int   @id  @default(autoincrement())
+  content     String     @db.Text
+  is_read     Boolean    @default(false)  @db.TinyInt
+  created_at  DateTime   @default(now())
+  //FK
+  users_id    Int
+  users       users      @relation(fields: [users_id], references: [id])  
+  type_id     Int
+  notification_type notification_type @relation(fields: [type_id], references: [id])  
+}
+
+model notification_type {
+  id      Int   @id   @default(autoincrement())
+  type    String      @db.VarChar(50)
+  notifications   notifications[]
 }
