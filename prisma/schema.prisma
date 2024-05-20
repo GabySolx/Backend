@@ -32,6 +32,7 @@ model users {
   psychologist progress_notes[] @relation("Psychologist")
   emotional_entries emotional_entries[]
   specialty_medic   specialty_medic[]
+  appointments    appointments[]
 }
 
 model type_user {
@@ -101,8 +102,8 @@ model emotional_entries {
   date          DateTime
   emotion       String      @db.VarChar(500)
   intensity     Int
-  created_at    DateTime?
-  update_at     DateTime
+  created_at    DateTime    @default(now())
+  update_at     DateTime?
   //FK
   patient_id    Int
   users       users       @relation(fields: [patient_id],references: [id])  
@@ -130,8 +131,59 @@ model specialty_medic {
 model schedule {
   id        Int   @id     @default(autoincrement())
   date      DateTime      @db.Date()
-  time      DateTime?      @db.Time()
+  time      DateTime?     @db.Time()
+  created_at  DateTime    @default(now())
+  update_at   DateTime?
   //FK
   smedic_id    Int
   specialty_medic   specialty_medic   @relation(fields: [smedic_id], references: [id])
+  appointments  appointments[]
+}
+
+// BC Appointment
+
+model appointments_status {
+  id        Int   @id    @default(autoincrement())
+  status    String       @db.VarChar(50)
+  appointments    appointments[]
+}
+
+model appointments {
+  id      Int     @id    @default(autoincrement())
+  duration    DateTime   @db.Time()
+  location    String     @db.VarChar(100) 
+  notes       String     @db.Text
+  created_at  DateTime   @default(now())
+  updated_at  DateTime?
+  //FK
+  patient_id  Int
+  users       users      @relation(fields: [patient_id], references: [id])
+  appointments_status_id  Int
+  appointments_status   appointments_status   @relation(fields: [appointments_status_id], references: [id])
+  schedule_id Int
+  schedule    schedule  @relation(fields: [schedule_id], references: [id])
+  prescriptions prescriptions[]
+  diagnoses   diagnoses[]
+}
+
+model prescriptions {
+  id            Int  @id  @default(autoincrement())
+  medication    String    @db.VarChar(500)
+  dosage        String    @db.VarChar(100)
+  instruction   String    @db.Text
+  created_at    DateTime  @default(now())
+  updated_at    DateTime?
+  //FK
+  appointments_id   Int
+  appointments  appointments    @relation(fields: [appointments_id], references: [id])
+}
+
+model diagnoses {
+  id            Int @id     @default(autoincrement())
+  description   String      @db.Text
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  //FK
+  appointments_id   Int
+  appointments  appointments  @relation(fields: [appointments_id], references: [id])
 }
