@@ -33,6 +33,7 @@ model users {
   emotional_entries emotional_entries[]
   specialty_medic   specialty_medic[]
   appointments    appointments[]
+  subscriptions  subscriptions[]
 }
 
 model type_user {
@@ -164,6 +165,7 @@ model appointments {
   schedule    schedule  @relation(fields: [schedule_id], references: [id])
   prescriptions prescriptions[]
   diagnoses   diagnoses[]
+  payments    payments[]
 }
 
 model prescriptions {
@@ -187,3 +189,54 @@ model diagnoses {
   appointments_id   Int
   appointments  appointments  @relation(fields: [appointments_id], references: [id])
 }
+
+//BC Payment
+
+model payment_status {
+  id      Int   @id       @default(autoincrement())
+  status  String          @db.VarChar(50)
+  payments    payments[]
+}
+
+model subscription_plans {
+  id                   Int  @id   @default(autoincrement())
+  subscription_plan    String     @db.VarChar(50)
+  subscriptions        subscriptions[]
+}
+
+model subscription_status {
+  id          Int   @id   @default(autoincrement())
+  status      String      @db.VarChar(50)  
+  subscriptions  subscriptions[]
+}
+
+model subscriptions {
+  id          Int   @id     @default(autoincrement())
+  start_date  DateTime
+  end_date    DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime?
+  //FK
+  plan_id     Int
+  subscription_plans    subscription_plans    @relation(fields: [plan_id],references: [id])      
+  user_id     Int
+  users                 users                 @relation(fields: [user_id],references: [id])
+  status_id   Int
+  subscription_status_id  subscription_status @relation(fields: [status_id],references: [id])
+  payments    payments[]
+}
+
+model payments {
+  id        Int   @id     @default(autoincrement())
+  amount    Decimal       @db.Decimal(2,2)
+  method    String        @db.VarChar(50)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime?
+  //FK
+  subscription_id   Int?
+  subscription   subscriptions?    @relation(fields: [subscription_id],references: [id])
+  appointment_id    Int?
+  appointments   appointments?     @relation(fields: [appointment_id],references: [id])
+  payment_id        Int
+  payment_status    payment_status @relation(fields: [payment_id],references: [id])
+} 
