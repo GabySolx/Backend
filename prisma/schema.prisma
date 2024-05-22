@@ -12,3 +12,231 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// BC Account
+
+model users {
+  id            Int   @id   @default(autoincrement())
+  first_name    String      @db.VarChar(50)    
+  last_name     String      @db.VarChar(50)
+  photo         String?     @db.VarChar(500)
+  email         String      @db.VarChar(50)
+  password      String      @db.VarChar(20)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  type_user_id  Int
+  type_user     type_user   @relation(fields: [type_user_id], references: [id])
+  chatbot_conversations   chatbot_conversations[]
+  notifications notifications[]
+  patient  progress_notes[]   @relation("Patient")
+  psychologist progress_notes[] @relation("Psychologist")
+  emotional_entries emotional_entries[]
+  specialty_medic   specialty_medic[]
+  appointments    appointments[]
+  subscriptions  subscriptions[]
+}
+
+model type_user {
+  id          Int   @id   @default(autoincrement())
+  type        String      @db.VarChar(25)
+  users       users[]
+}
+
+// BC Chatbot
+
+model chatbot_conversations{
+  id            Int     @id   @default(autoincrement())
+  start_date    DateTime
+  end_date      DateTime
+  users_id      Int
+  chatbot_messages  chatbot_messages[]
+  users         users         @relation(fields: [users_id], references: [id])
+}
+
+model chatbot_messages {
+  id              Int   @id   @default(autoincrement())
+  content         String      @db.Text  
+  is_user_message Boolean     @default(false) @db.TinyInt
+  created_at      DateTime    @default(now())
+  updated_at      DateTime?
+  chatbot_conversations_id   Int
+  chatbot_conversations chatbot_conversations   @relation(fields: [chatbot_conversations_id], references: [id])    
+}
+
+// BC Notification
+
+model notifications {
+  id          Int   @id  @default(autoincrement())
+  content     String     @db.Text
+  is_read     Boolean    @default(false)  @db.TinyInt
+  created_at  DateTime   @default(now())
+  //FK
+  users_id    Int
+  users       users      @relation(fields: [users_id], references: [id])  
+  type_id     Int
+  notification_type notification_type @relation(fields: [type_id], references: [id])  
+}
+
+model notification_type {
+  id      Int   @id   @default(autoincrement())
+  type    String      @db.VarChar(50)
+  notifications   notifications[]
+}
+
+//BC Monitoring
+
+model progress_notes {
+  id            Int     @id @default(autoincrement())
+  date          DateTime
+  notes         String      @db.Text
+  created_at    DateTime    @default(now())
+  update_at     DateTime?
+  //FK
+  patient_id    Int
+  patient         users       @relation("Patient", fields: [patient_id], references: [id])
+  psychologist_id   Int
+  psychologist    users       @relation("Psychologist",fields: [psychologist_id],references: [id])
+}
+
+model emotional_entries {
+  id            Int   @id   @default(autoincrement())
+  date          DateTime
+  emotion       String      @db.VarChar(500)
+  intensity     Int
+  created_at    DateTime    @default(now())
+  update_at     DateTime?
+  //FK
+  patient_id    Int
+  users       users       @relation(fields: [patient_id],references: [id])  
+}
+
+//BC Schedule
+
+model specialty {
+  id          Int  @id    @default(autoincrement())
+  type        String      @db.VarChar(30)
+  specialty_medic   specialty_medic[]
+}
+
+model specialty_medic {
+  id         Int    @id   @default(autoincrement())
+  years      Int?    
+  //FK
+  specialty_id    Int
+  specialty       specialty   @relation(fields: [specialty_id], references: [id])
+  psychologist_id   Int
+  users           users       @relation(fields: [psychologist_id], references: [id])
+  schedule        schedule[]
+}
+
+model schedule {
+  id        Int   @id     @default(autoincrement())
+  date      DateTime      @db.Date()
+  time      DateTime?     @db.Time()
+  created_at  DateTime    @default(now())
+  update_at   DateTime?
+  //FK
+  smedic_id    Int
+  specialty_medic   specialty_medic   @relation(fields: [smedic_id], references: [id])
+  appointments  appointments[]
+}
+
+// BC Appointment
+
+model appointments_status {
+  id        Int   @id    @default(autoincrement())
+  status    String       @db.VarChar(50)
+  appointments    appointments[]
+}
+
+model appointments {
+  id      Int     @id    @default(autoincrement())
+  duration    DateTime   @db.Time()
+  location    String     @db.VarChar(100) 
+  notes       String     @db.Text
+  created_at  DateTime   @default(now())
+  updated_at  DateTime?
+  //FK
+  patient_id  Int
+  users       users      @relation(fields: [patient_id], references: [id])
+  appointments_status_id  Int
+  appointments_status   appointments_status   @relation(fields: [appointments_status_id], references: [id])
+  schedule_id Int
+  schedule    schedule  @relation(fields: [schedule_id], references: [id])
+  prescriptions prescriptions[]
+  diagnoses   diagnoses[]
+  payments    payments[]
+}
+
+model prescriptions {
+  id            Int  @id  @default(autoincrement())
+  medication    String    @db.VarChar(500)
+  dosage        String    @db.VarChar(100)
+  instruction   String    @db.Text
+  created_at    DateTime  @default(now())
+  updated_at    DateTime?
+  //FK
+  appointments_id   Int
+  appointments  appointments    @relation(fields: [appointments_id], references: [id])
+}
+
+model diagnoses {
+  id            Int @id     @default(autoincrement())
+  description   String      @db.Text
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  //FK
+  appointments_id   Int
+  appointments  appointments  @relation(fields: [appointments_id], references: [id])
+}
+
+//BC Payment
+
+model payment_status {
+  id      Int   @id       @default(autoincrement())
+  status  String          @db.VarChar(50)
+  payments    payments[]
+}
+
+model subscription_plans {
+  id                   Int  @id   @default(autoincrement())
+  subscription_plan    String     @db.VarChar(50)
+  subscriptions        subscriptions[]
+}
+
+model subscription_status {
+  id          Int   @id   @default(autoincrement())
+  status      String      @db.VarChar(50)  
+  subscriptions  subscriptions[]
+}
+
+model subscriptions {
+  id          Int   @id     @default(autoincrement())
+  start_date  DateTime
+  end_date    DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime?
+  //FK
+  plan_id     Int
+  subscription_plans    subscription_plans    @relation(fields: [plan_id],references: [id])      
+  user_id     Int
+  users                 users                 @relation(fields: [user_id],references: [id])
+  status_id   Int
+  subscription_status_id  subscription_status @relation(fields: [status_id],references: [id])
+  payments    payments[]
+}
+
+model payments {
+  id        Int   @id     @default(autoincrement())
+  amount    Decimal       @db.Decimal(2,2)
+  method    String        @db.VarChar(50)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime?
+  //FK
+  subscription_id   Int?
+  subscription   subscriptions?    @relation(fields: [subscription_id],references: [id])
+  appointment_id    Int?
+  appointments   appointments?     @relation(fields: [appointment_id],references: [id])
+  payment_id        Int
+  payment_status    payment_status @relation(fields: [payment_id],references: [id])
+} 
